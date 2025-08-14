@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>เกมจับคู่ภาพ (8 รูป × 2 ใบ)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom, #e0eafc, #cfdef3);
+      transition: background 0.5s ease;
+      user-select: none;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 12px;
+      justify-content: center;
+      margin: 30px auto;
+    }
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: #444;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+    }
+    .card.flipped {
+      background-color: white;
+      transform: rotateY(180deg);
+      cursor: default;
+    }
+    .card img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      display: none;
+      pointer-events: none;
+      user-select: none;
+    }
+    .card.flipped img {
+      display: block;
+    }
+    .card.matched {
+      background-color: #4caf50;
+      cursor: default;
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #4caf50;
+    }
+    #score {
+      font-weight: bold;
+      font-size: 20px;
+    }
+    #reset-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #ff6f61;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+    #reset-btn:hover {
+      background: #ff3d2f;
+    }
+    #message {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #2e7d32;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>เกมจับคู่ภาพ</h1>
+  <p>คะแนน (เต็ม 10): <span id="score">0.0</span></p>
+  <button id="reset-btn">รีเซ็ตเกม</button>
+  <div id="message"></div>
+  <div id="game-board"></div>
+
+  <script>
+    // ใช้รูปจริงจากโพสต์ก่อนหน้า
+    const images = [
+      "https://i.postimg.cc/87BV89wZ/S-31924320.jpg",
+      "https://i.postimg.cc/jWM02fpN/S-31924322.jpg",
+      "https://i.postimg.cc/2b3pZ6Yt/S-31924323.jpg",
+      "https://i.postimg.cc/Mfjh9Fvb/S-31924324.jpg",
+      "https://i.postimg.cc/zbQsSrXG/S-31924325.jpg",
+      "https://i.postimg.cc/JtDV7GPD/S-31924326.jpg",
+      "https://i.postimg.cc/0rTgzPBt/S-31924327.jpg",
+      "https://i.postimg.cc/RNKkf2rv/S-31924328.jpg"
+    ];
+
+    const board = document.getElementById("game-board");
+    const scoreDisplay = document.getElementById("score");
+    const resetBtn = document.getElementById("reset-btn");
+    const message = document.getElementById("message");
+
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let score = 0;
+    let matchedPairs = 0;
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function createBoard() {
+      board.innerHTML = "";
+      score = 0;
+      matchedPairs = 0;
+      lockBoard = false;
+      updateScore(0);
+      message.textContent = "";
+      document.body.style.background = "linear-gradient(to bottom, #e0eafc, #cfdef3)";
+      firstCard = null;
+      secondCard = null;
+
+      let cardSet = [];
+      images.forEach(img => {
+        cardSet.push(img, img);
+      });
+
+      shuffleArray(cardSet);
+
+      cardSet.forEach((imgSrc) => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.dataset.image = imgSrc;
+
+        const img = document.createElement("img");
+        img.src = imgSrc;
+        img.alt = "การ์ดรูปภาพ";
+
+        card.appendChild(img);
+        card.addEventListener("click", () => handleFlip(card));
+        board.appendChild(card);
+      });
+    }
+
+    function handleFlip(card) {
+      if (lockBoard) return;
+      if (card === firstCard) return;
+      if (card.classList.contains("matched")) return;
+
+      card.classList.add("flipped");
+
+      if (!firstCard) {
+        firstCard = card;
+        return;
+      }
+
+      secondCard = card;
+      lockBoard = true;
+
+      if (firstCard.dataset.image === secondCard.dataset.image) {
+        firstCard.classList.add("matched");
+        secondCard.classList.add("matched");
+        matchedPairs++;
+        updateScore(score + 1);
+
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+
+        if (matchedPairs === images.length) {
+          message.textContent = "🎉 ชนะแล้ว! ยอดเยี่ยมมาก!";
+          document.body.style.background = "linear-gradient(to right, #8fd3f4, #84fab0)";
+        }
+      } else {
+        setTimeout(() => {
+          firstCard.classList.remove("flipped");
+          secondCard.classList.remove("flipped");
+          firstCard = null;
+          secondCard = null;
+          lockBoard = false;
+        }, 1200);
+      }
+    }
+
+    function updateScore(newScore) {
+      score = newScore;
+      const scaledScore = ((score / images.length) * 10).toFixed(1);
+      scoreDisplay.textContent = scaledScore;
+    }
+
+    resetBtn.addEventListener("click", createBoard);
+
+    createBoard();
+  </script>
+</body>
+</html>
